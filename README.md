@@ -2,6 +2,7 @@
 
 ## GitHub Pages deployment
 
+
 This repo ships a static UI. Enable GitHub Pages to publish the `main` branch:
 
 1. In GitHub, open **Settings → Pages**.
