@@ -96,13 +96,6 @@ body {
   cursor: pointer;
 }
 
-.primary-button:disabled,
-.secondary-button:disabled,
-.ghost-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .primary-button {
   background: var(--accent);
   color: #fff;
@@ -174,31 +167,6 @@ body {
   gap: 6px;
 }
 
-.product-card__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.text-button {
-  border: none;
-  background: transparent;
-  color: var(--accent);
-  cursor: pointer;
-  font-weight: 600;
-  padding: 0;
-}
-
-.danger-button {
-  border: none;
-  background: transparent;
-  color: #d14343;
-  cursor: pointer;
-  font-weight: 600;
-  padding: 0;
-}
-
 .product-card.is-active {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent);
@@ -241,11 +209,6 @@ body {
   gap: 12px;
 }
 
-.section-card.is-dragover {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -271,18 +234,6 @@ body {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-}
-
-.field-row__controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.drag-handle {
-  cursor: grab;
-  color: var(--muted);
-  font-size: 14px;
 }
 
 .field-row.is-selected {

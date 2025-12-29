@@ -36,7 +36,6 @@ const defaultState = {
   selectedProductId: "prod-1",
   selectedSectionId: "section-1",
   selectedFieldId: "field-1",
-  editingProductId: null,
 };
 
 const elements = {
@@ -83,22 +82,8 @@ function updateSelection({ productId, sectionId, fieldId }) {
   render();
 }
 
-function updateEditingProduct(productId) {
-  state.editingProductId = productId;
-  const product = state.products.find((item) => item.id === productId);
-  updateSelection({
-    productId,
-    sectionId: product?.sections[0]?.id ?? null,
-    fieldId: product?.sections[0]?.fields[0]?.id ?? null,
-  });
-}
-
 function getSelectedProduct() {
   return state.products.find((product) => product.id === state.selectedProductId);
-}
-
-function getEditingProduct() {
-  return state.products.find((product) => product.id === state.editingProductId);
 }
 
 function getSelectedSection(product) {
@@ -117,42 +102,30 @@ function renderProductList() {
     .forEach((product) => {
       const li = document.createElement("li");
       li.className = "product-card";
-      if (product.id === state.editingProductId) {
+      if (product.id === state.selectedProductId) {
         li.classList.add("is-active");
       }
       li.innerHTML = `
         <strong>${product.name}</strong>
         <span class="product-status">${product.status}</span>
         <span class="product-meta">${product.category}</span>
-        <div class="product-card__footer">
-          <button class="text-button" type="button" data-action="edit">Edit</button>
-          <button class="danger-button" type="button" data-action="delete">Delete</button>
-        </div>
       `;
-      li.querySelector('[data-action="edit"]').addEventListener("click", (event) => {
-        event.stopPropagation();
-        updateEditingProduct(product.id);
-      });
-      li.querySelector('[data-action="delete"]').addEventListener("click", (event) => {
-        event.stopPropagation();
-        deleteProduct(product.id);
+      li.addEventListener("click", () => {
+        const firstSection = product.sections[0];
+        updateSelection({
+          productId: product.id,
+          sectionId: firstSection?.id ?? null,
+          fieldId: firstSection?.fields[0]?.id ?? null,
+        });
       });
       elements.productList.appendChild(li);
     });
 }
 
-function renderEmptyCanvas() {
-  elements.canvasBody.innerHTML = `
-    <div class="empty-state">
-      Select a product from the left rail and click Edit to start building fields.
-    </div>
-  `;
-}
-
 function renderCanvas(product) {
   elements.canvasBody.innerHTML = "";
   if (!product) {
-    renderEmptyCanvas();
+    elements.canvasBody.innerHTML = `<div class="empty-state">Create a product to begin.</div>`;
     return;
   }
 
@@ -170,14 +143,9 @@ function renderCanvas(product) {
           <div class="section-title">${section.title}</div>
           <div class="field-meta">${section.description || "Section description"}</div>
         </div>
-        <div class="section-actions">
-          <button class="ghost-button" type="button" data-section="${section.id}">
-            Add Field
-          </button>
-          <button class="danger-button" type="button" data-delete="${section.id}">
-            Delete Section
-          </button>
-        </div>
+        <button class="ghost-button" type="button" data-section="${section.id}">
+          Add Field
+        </button>
       </div>
       <div class="field-list"></div>
     `;
@@ -189,9 +157,6 @@ function renderCanvas(product) {
       section.fields.forEach((field) => {
         const fieldRow = document.createElement("div");
         fieldRow.className = "field-row";
-        fieldRow.setAttribute("draggable", "true");
-        fieldRow.dataset.fieldId = field.id;
-        fieldRow.dataset.sectionId = section.id;
         if (field.id === state.selectedFieldId) {
           fieldRow.classList.add("is-selected");
         }
@@ -200,35 +165,13 @@ function renderCanvas(product) {
             <strong>${field.label}</strong>
             <div class="field-meta">${field.type} • ${field.key}</div>
           </div>
-          <div class="field-row__controls">
-            <span class="field-meta">${field.required ? "Required" : "Optional"}</span>
-            <span class="drag-handle" aria-hidden="true">⠿</span>
-          </div>
+          <span class="field-meta">${field.required ? "Required" : "Optional"}</span>
         `;
         fieldRow.addEventListener("click", () => {
           updateSelection({
             sectionId: section.id,
             fieldId: field.id,
           });
-        });
-        fieldRow.addEventListener("dragstart", (event) => {
-          event.dataTransfer.effectAllowed = "move";
-          event.dataTransfer.setData("text/plain", JSON.stringify({
-            fieldId: field.id,
-            sectionId: section.id,
-          }));
-        });
-        fieldRow.addEventListener("dragover", (event) => {
-          event.preventDefault();
-          event.dataTransfer.dropEffect = "move";
-        });
-        fieldRow.addEventListener("drop", (event) => {
-          event.preventDefault();
-          const payload = parseDragPayload(event.dataTransfer.getData("text/plain"));
-          if (!payload) {
-            return;
-          }
-          reorderField(payload, { sectionId: section.id, beforeFieldId: field.id });
         });
         list.appendChild(fieldRow);
       });
@@ -237,32 +180,6 @@ function renderCanvas(product) {
     sectionEl
       .querySelector("button[data-section]")
       .addEventListener("click", () => addField(section.id, "Text"));
-    sectionEl
-      .querySelector("button[data-delete]")
-      .addEventListener("click", () => deleteSection(section.id));
-
-    sectionEl.addEventListener("dragover", (event) => {
-      if (!isDraggingFieldType(event)) {
-        return;
-      }
-      event.preventDefault();
-      sectionEl.classList.add("is-dragover");
-    });
-    sectionEl.addEventListener("dragleave", () => {
-      sectionEl.classList.remove("is-dragover");
-    });
-    sectionEl.addEventListener("drop", (event) => {
-      event.preventDefault();
-      sectionEl.classList.remove("is-dragover");
-      const payload = parseDragPayload(event.dataTransfer.getData("text/plain"));
-      if (payload?.type) {
-        addField(section.id, payload.type);
-        return;
-      }
-      if (payload?.fieldId) {
-        reorderField(payload, { sectionId: section.id });
-      }
-    });
 
     elements.canvasBody.appendChild(sectionEl);
   });
@@ -359,7 +276,7 @@ function renderTopBar(product) {
 }
 
 function render() {
-  const product = getEditingProduct();
+  const product = getSelectedProduct();
   const section = getSelectedSection(product);
   const field = getSelectedField(section);
 
@@ -367,7 +284,6 @@ function render() {
   renderProductList();
   renderCanvas(product);
   renderPropertyPanel(product, section, field);
-  elements.addSectionButton.disabled = !product;
 }
 
 function openModal() {
@@ -399,13 +315,17 @@ function addProduct() {
     ],
   };
   state.products.unshift(newProduct);
-  updateEditingProduct(newProduct.id);
+  updateSelection({
+    productId: newProduct.id,
+    sectionId: newProduct.sections[0].id,
+    fieldId: null,
+  });
   closeModal();
   saveState();
 }
 
 function addSection() {
-  const product = getEditingProduct();
+  const product = getSelectedProduct();
   if (!product) {
     return;
   }
@@ -424,7 +344,7 @@ function addSection() {
 }
 
 function addField(sectionId, type) {
-  const product = getEditingProduct();
+  const product = getSelectedProduct();
   const section = product?.sections.find((item) => item.id === sectionId);
   if (!section) {
     return;
@@ -445,83 +365,6 @@ function addField(sectionId, type) {
   saveState();
 }
 
-function deleteSection(sectionId) {
-  const product = getEditingProduct();
-  if (!product) {
-    return;
-  }
-  product.sections = product.sections.filter((section) => section.id !== sectionId);
-  updateSelection({
-    sectionId: product.sections[0]?.id ?? null,
-    fieldId: product.sections[0]?.fields[0]?.id ?? null,
-  });
-  saveState();
-}
-
-function deleteProduct(productId) {
-  const product = state.products.find((item) => item.id === productId);
-  if (!product) {
-    return;
-  }
-  const confirmDelete = window.confirm(`Delete ${product.name}? This cannot be undone.`);
-  if (!confirmDelete) {
-    return;
-  }
-  state.products = state.products.filter((item) => item.id !== productId);
-  if (state.editingProductId === productId) {
-    state.editingProductId = null;
-  }
-  render();
-  saveState();
-}
-
-function parseDragPayload(raw) {
-  if (!raw) {
-    return null;
-  }
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
-function isDraggingFieldType(event) {
-  return Array.from(event.dataTransfer.types).includes("text/plain");
-}
-
-function reorderField(payload, { sectionId, beforeFieldId }) {
-  const product = getEditingProduct();
-  if (!product || !payload?.fieldId) {
-    return;
-  }
-  const sourceSection = product.sections.find((section) => section.id === payload.sectionId);
-  const targetSection = product.sections.find((section) => section.id === sectionId);
-  if (!sourceSection || !targetSection) {
-    return;
-  }
-  const fieldIndex = sourceSection.fields.findIndex((field) => field.id === payload.fieldId);
-  if (fieldIndex === -1) {
-    return;
-  }
-  const [field] = sourceSection.fields.splice(fieldIndex, 1);
-  if (!beforeFieldId) {
-    targetSection.fields.push(field);
-  } else {
-    const beforeIndex = targetSection.fields.findIndex((item) => item.id === beforeFieldId);
-    if (beforeIndex === -1) {
-      targetSection.fields.push(field);
-    } else {
-      targetSection.fields.splice(beforeIndex, 0, field);
-    }
-  }
-  updateSelection({
-    sectionId: targetSection.id,
-    fieldId: field.id,
-  });
-  saveState();
-}
-
 elements.addSectionButton.addEventListener("click", addSection);
 elements.newProductButton.addEventListener("click", openModal);
 elements.cancelModalButton.addEventListener("click", closeModal);
@@ -532,7 +375,7 @@ elements.saveVersionButton.addEventListener("click", () => {
 });
 elements.productSearch.addEventListener("input", renderProductList);
 elements.productName.addEventListener("blur", () => {
-  const product = getEditingProduct();
+  const product = getSelectedProduct();
   if (product) {
     product.name = elements.productName.textContent.trim() || "Untitled Product";
     renderProductList();
@@ -548,20 +391,12 @@ elements.toolbox.addEventListener("click", (event) => {
   if (!type || type === "Section") {
     return;
   }
-  const product = getEditingProduct();
+  const product = getSelectedProduct();
   const section = getSelectedSection(product);
   if (!section) {
     return;
   }
   addField(section.id, type);
-});
-
-document.querySelectorAll(".toolbox-item").forEach((item) => {
-  item.setAttribute("draggable", "true");
-  item.addEventListener("dragstart", (event) => {
-    event.dataTransfer.effectAllowed = "copy";
-    event.dataTransfer.setData("text/plain", JSON.stringify({ type: item.dataset.type }));
-  });
 });
 
 render();
