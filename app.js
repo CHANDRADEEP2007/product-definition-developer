@@ -36,6 +36,7 @@ const defaultState = {
   selectedProductId: "prod-1",
   selectedSectionId: "section-1",
   selectedFieldId: "field-1",
+  view: "overview",
 };
 
 const elements = {
@@ -55,6 +56,10 @@ const elements = {
   saveVersionButton: document.getElementById("saveVersionButton"),
   toolbox: document.getElementById("toolbox"),
   productSearch: document.getElementById("productSearch"),
+  productOverview: document.getElementById("productOverview"),
+  editorWorkspace: document.getElementById("editorWorkspace"),
+  backToListButton: document.getElementById("backToListButton"),
+  editorActions: document.getElementById("editorActions"),
 };
 
 let state = loadState();
@@ -65,7 +70,12 @@ function loadState() {
     return structuredClone(defaultState);
   }
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    return {
+      ...structuredClone(defaultState),
+      ...parsed,
+      view: parsed.view ?? "overview",
+    };
   } catch {
     return structuredClone(defaultState);
   }
@@ -73,6 +83,19 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function setView(view) {
+  state.view = view;
+  renderView();
+}
+
+function renderView() {
+  const isOverview = state.view === "overview";
+  elements.productOverview.classList.toggle("hidden", !isOverview);
+  elements.editorWorkspace.classList.toggle("hidden", isOverview);
+  elements.backToListButton.classList.toggle("hidden", isOverview);
+  elements.editorActions.classList.toggle("hidden", isOverview);
 }
 
 function updateSelection({ productId, sectionId, fieldId }) {
@@ -97,29 +120,54 @@ function getSelectedField(section) {
 function renderProductList() {
   const search = elements.productSearch.value.toLowerCase();
   elements.productList.innerHTML = "";
-  state.products
-    .filter((product) => product.name.toLowerCase().includes(search))
-    .forEach((product) => {
-      const li = document.createElement("li");
-      li.className = "product-card";
-      if (product.id === state.selectedProductId) {
-        li.classList.add("is-active");
-      }
-      li.innerHTML = `
+  const filteredProducts = state.products.filter((product) =>
+    product.name.toLowerCase().includes(search),
+  );
+
+  if (!filteredProducts.length) {
+    elements.productList.innerHTML = `<li class="empty-state">No products match your search.</li>`;
+    return;
+  }
+
+  filteredProducts.forEach((product) => {
+    const li = document.createElement("li");
+    li.className = "product-card";
+    if (product.id === state.selectedProductId) {
+      li.classList.add("is-active");
+    }
+    li.innerHTML = `
+      <div class="product-card__header">
         <strong>${product.name}</strong>
+        <button class="secondary-button" type="button" data-edit-product="${product.id}">
+          Edit
+        </button>
+      </div>
+      <div class="product-card__details">
         <span class="product-status">${product.status}</span>
         <span class="product-meta">${product.category}</span>
-      `;
-      li.addEventListener("click", () => {
-        const firstSection = product.sections[0];
-        updateSelection({
-          productId: product.id,
-          sectionId: firstSection?.id ?? null,
-          fieldId: firstSection?.fields[0]?.id ?? null,
-        });
+      </div>
+    `;
+    li.addEventListener("click", (event) => {
+      if (event.target instanceof HTMLButtonElement) {
+        return;
+      }
+      updateSelection({
+        productId: product.id,
+        sectionId: product.sections[0]?.id ?? null,
+        fieldId: product.sections[0]?.fields[0]?.id ?? null,
       });
-      elements.productList.appendChild(li);
     });
+    li.querySelector("[data-edit-product]").addEventListener("click", () => {
+      const firstSection = product.sections[0];
+      updateSelection({
+        productId: product.id,
+        sectionId: firstSection?.id ?? null,
+        fieldId: firstSection?.fields[0]?.id ?? null,
+      });
+      setView("editor");
+    });
+    elements.productList.appendChild(li);
+  });
 }
 
 function renderCanvas(product) {
@@ -322,6 +370,7 @@ function addProduct() {
   });
   closeModal();
   saveState();
+  setView("editor");
 }
 
 function addSection() {
@@ -398,5 +447,7 @@ elements.toolbox.addEventListener("click", (event) => {
   }
   addField(section.id, type);
 });
+elements.backToListButton.addEventListener("click", () => setView("overview"));
 
 render();
+renderView();
