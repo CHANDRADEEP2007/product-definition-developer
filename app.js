@@ -19,6 +19,7 @@ const defaultState = {
               label: "Applicant Name",
               key: "applicantName",
               type: "Text",
+              description: "Collect the full legal name of the applicant.",
               required: true,
             },
             {
@@ -26,6 +27,7 @@ const defaultState = {
               label: "Date of Birth",
               key: "dateOfBirth",
               type: "Date",
+              description: "Used to verify age and eligibility.",
               required: true,
             },
           ],
@@ -36,6 +38,7 @@ const defaultState = {
   selectedProductId: "prod-1",
   selectedSectionId: "section-1",
   selectedFieldId: "field-1",
+  view: "overview",
 };
 
 const elements = {
@@ -53,8 +56,12 @@ const elements = {
   newProductCategory: document.getElementById("newProductCategory"),
   saveButton: document.getElementById("saveButton"),
   saveVersionButton: document.getElementById("saveVersionButton"),
-  toolbox: document.getElementById("toolbox"),
   productSearch: document.getElementById("productSearch"),
+  productOverview: document.getElementById("productOverview"),
+  editorWorkspace: document.getElementById("editorWorkspace"),
+  backToListButton: document.getElementById("backToListButton"),
+  editorActions: document.getElementById("editorActions"),
+  featureList: document.getElementById("featureList"),
 };
 
 let state = loadState();
@@ -65,7 +72,12 @@ function loadState() {
     return structuredClone(defaultState);
   }
   try {
-    return JSON.parse(stored);
+    const parsed = JSON.parse(stored);
+    return {
+      ...structuredClone(defaultState),
+      ...parsed,
+      view: parsed.view ?? "overview",
+    };
   } catch {
     return structuredClone(defaultState);
   }
@@ -73,6 +85,19 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function setView(view) {
+  state.view = view;
+  renderView();
+}
+
+function renderView() {
+  const isOverview = state.view === "overview";
+  elements.productOverview.classList.toggle("hidden", !isOverview);
+  elements.editorWorkspace.classList.toggle("hidden", isOverview);
+  elements.backToListButton.classList.toggle("hidden", isOverview);
+  elements.editorActions.classList.toggle("hidden", isOverview);
 }
 
 function updateSelection({ productId, sectionId, fieldId }) {
@@ -97,29 +122,94 @@ function getSelectedField(section) {
 function renderProductList() {
   const search = elements.productSearch.value.toLowerCase();
   elements.productList.innerHTML = "";
-  state.products
-    .filter((product) => product.name.toLowerCase().includes(search))
-    .forEach((product) => {
-      const li = document.createElement("li");
-      li.className = "product-card";
-      if (product.id === state.selectedProductId) {
-        li.classList.add("is-active");
-      }
-      li.innerHTML = `
+  const filteredProducts = state.products.filter((product) =>
+    product.name.toLowerCase().includes(search),
+  );
+
+  if (!filteredProducts.length) {
+    elements.productList.innerHTML = `<li class="empty-state">No products match your search.</li>`;
+    return;
+  }
+
+  filteredProducts.forEach((product) => {
+    const li = document.createElement("li");
+    li.className = "product-card";
+    if (product.id === state.selectedProductId) {
+      li.classList.add("is-active");
+    }
+    li.innerHTML = `
+      <div class="product-card__header">
         <strong>${product.name}</strong>
+        <button class="secondary-button" type="button" data-edit-product="${product.id}">
+          Edit
+        </button>
+      </div>
+      <div class="product-card__details">
         <span class="product-status">${product.status}</span>
         <span class="product-meta">${product.category}</span>
-      `;
-      li.addEventListener("click", () => {
-        const firstSection = product.sections[0];
-        updateSelection({
-          productId: product.id,
-          sectionId: firstSection?.id ?? null,
-          fieldId: firstSection?.fields[0]?.id ?? null,
-        });
+      </div>
+    `;
+    li.addEventListener("click", (event) => {
+      if (event.target instanceof HTMLButtonElement) {
+        return;
+      }
+      updateSelection({
+        productId: product.id,
+        sectionId: product.sections[0]?.id ?? null,
+        fieldId: product.sections[0]?.fields[0]?.id ?? null,
       });
-      elements.productList.appendChild(li);
     });
+    li.querySelector("[data-edit-product]").addEventListener("click", () => {
+      const firstSection = product.sections[0];
+      updateSelection({
+        productId: product.id,
+        sectionId: firstSection?.id ?? null,
+        fieldId: firstSection?.fields[0]?.id ?? null,
+      });
+      setView("editor");
+    });
+    elements.productList.appendChild(li);
+  });
+}
+
+function renderPlayground(product, field) {
+  if (!product) {
+    return `<div class="playground empty-state">Select a product to begin.</div>`;
+  }
+
+  if (!field) {
+    return `
+      <div class="playground empty-state">
+        Choose a feature type to add it to the playground.
+      </div>
+    `;
+  }
+
+  return `
+    <div class="playground">
+      <div class="playground-header">
+        <div>
+          <h3>Playground</h3>
+          <p>Configure the feature details below.</p>
+        </div>
+        <span class="playground-chip">${field.type}</span>
+      </div>
+      <div class="playground-body">
+        <label>
+          Label
+          <input type="text" value="${field.label}" data-playground="label" />
+        </label>
+        <label>
+          Description
+          <textarea data-playground="description">${field.description || ""}</textarea>
+        </label>
+        <label class="playground-toggle">
+          <span>Required</span>
+          <input type="checkbox" ${field.required ? "checked" : ""} data-playground="required" />
+        </label>
+      </div>
+    </div>
+  `;
 }
 
 function renderCanvas(product) {
@@ -129,8 +219,15 @@ function renderCanvas(product) {
     return;
   }
 
+  const sectionList = document.createElement("div");
+  sectionList.className = "section-list";
+
+  const selectedField = getSelectedField(getSelectedSection(product));
+  sectionList.innerHTML = renderPlayground(product, selectedField);
+
   if (!product.sections.length) {
-    elements.canvasBody.innerHTML = `<div class="empty-state">Add a section to begin.</div>`;
+    sectionList.innerHTML += `<div class="empty-state">Add a section to begin.</div>`;
+    elements.canvasBody.appendChild(sectionList);
     return;
   }
 
@@ -181,7 +278,29 @@ function renderCanvas(product) {
       .querySelector("button[data-section]")
       .addEventListener("click", () => addField(section.id, "Text"));
 
-    elements.canvasBody.appendChild(sectionEl);
+    sectionList.appendChild(sectionEl);
+  });
+
+  elements.canvasBody.appendChild(sectionList);
+
+  const playgroundInputs = elements.canvasBody.querySelectorAll("[data-playground]");
+  playgroundInputs.forEach((input) => {
+    input.addEventListener("change", (event) => {
+      if (!selectedField) {
+        return;
+      }
+      const target = event.target;
+      const fieldName = target.dataset.playground;
+      if (!fieldName) {
+        return;
+      }
+      if (fieldName === "required") {
+        selectedField.required = target.checked;
+      } else {
+        selectedField[fieldName] = target.value;
+      }
+      render();
+    });
   });
 }
 
@@ -201,12 +320,13 @@ function renderPropertyPanel(product, section, field) {
       <label>Label <input type="text" value="${field.label}" data-field="label" /></label>
       <label>Key <input type="text" value="${field.key}" data-field="key" /></label>
       <label>Type <input type="text" value="${field.type}" disabled /></label>
+      <label>Description <textarea data-field="description">${field.description || ""}</textarea></label>
       <label>
         Required
         <input type="checkbox" ${field.required ? "checked" : ""} data-field="required" />
       </label>
     `;
-    fieldCard.querySelectorAll("input").forEach((input) => {
+    fieldCard.querySelectorAll("input, textarea").forEach((input) => {
       input.addEventListener("change", (event) => {
         const target = event.target;
         const fieldName = target.dataset.field;
@@ -322,6 +442,7 @@ function addProduct() {
   });
   closeModal();
   saveState();
+  setView("editor");
 }
 
 function addSection() {
@@ -355,6 +476,7 @@ function addField(sectionId, type) {
     label: `${type} Field`,
     key: slug,
     type,
+    description: "",
     required: false,
   };
   section.fields.push(newField);
@@ -382,21 +504,23 @@ elements.productName.addEventListener("blur", () => {
     saveState();
   }
 });
-elements.toolbox.addEventListener("click", (event) => {
+elements.featureList.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof HTMLButtonElement)) {
     return;
   }
   const type = target.dataset.type;
-  if (!type || type === "Section") {
+  if (!type) {
     return;
   }
   const product = getSelectedProduct();
-  const section = getSelectedSection(product);
+  const section = getSelectedSection(product) ?? product?.sections[0];
   if (!section) {
     return;
   }
   addField(section.id, type);
 });
+elements.backToListButton.addEventListener("click", () => setView("overview"));
 
 render();
+renderView();
