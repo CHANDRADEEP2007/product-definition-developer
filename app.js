@@ -61,7 +61,6 @@ const elements = {
   editorWorkspace: document.getElementById("editorWorkspace"),
   backToListButton: document.getElementById("backToListButton"),
   editorActions: document.getElementById("editorActions"),
-  featureList: document.getElementById("featureList"),
 };
 
 let state = loadState();
@@ -170,46 +169,6 @@ function renderProductList() {
     });
     elements.productList.appendChild(li);
   });
-}
-
-function renderPlayground(product, field) {
-  if (!product) {
-    return `<div class="playground empty-state">Select a product to begin.</div>`;
-  }
-
-  if (!field) {
-    return `
-      <div class="playground empty-state">
-        Choose a feature type to add it to the playground.
-      </div>
-    `;
-  }
-
-  return `
-    <div class="playground">
-      <div class="playground-header">
-        <div>
-          <h3>Playground</h3>
-          <p>Configure the feature details below.</p>
-        </div>
-        <span class="playground-chip">${field.type}</span>
-      </div>
-      <div class="playground-body">
-        <label>
-          Label
-          <input type="text" value="${field.label}" data-playground="label" />
-        </label>
-        <label>
-          Description
-          <textarea data-playground="description">${field.description || ""}</textarea>
-        </label>
-        <label class="playground-toggle">
-          <span>Required</span>
-          <input type="checkbox" ${field.required ? "checked" : ""} data-playground="required" />
-        </label>
-      </div>
-    </div>
-  `;
 }
 
 function renderCanvas(product) {
