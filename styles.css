@@ -131,7 +131,7 @@ body {
 }
 
 .workspace--editor {
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 260px 1fr 320px;
 }
 
 .product-overview {
