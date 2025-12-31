@@ -61,6 +61,7 @@ const elements = {
   editorWorkspace: document.getElementById("editorWorkspace"),
   backToListButton: document.getElementById("backToListButton"),
   editorActions: document.getElementById("editorActions"),
+  featureList: document.getElementById("featureList"),
 };
 
 let state = loadState();
