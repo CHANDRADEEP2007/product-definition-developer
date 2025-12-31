@@ -158,6 +158,7 @@ function renderProductList() {
         sectionId: product.sections[0]?.id ?? null,
         fieldId: product.sections[0]?.fields[0]?.id ?? null,
       });
+      setView("editor");
     });
     li.querySelector("[data-edit-product]").addEventListener("click", () => {
       const firstSection = product.sections[0];
