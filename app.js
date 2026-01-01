@@ -56,6 +56,8 @@ const elements = {
   newProductCategory: document.getElementById("newProductCategory"),
   saveButton: document.getElementById("saveButton"),
   saveVersionButton: document.getElementById("saveVersionButton"),
+  versionButton: document.getElementById("versionButton"),
+  versionMenu: document.getElementById("versionMenu"),
   productSearch: document.getElementById("productSearch"),
   productOverview: document.getElementById("productOverview"),
   editorWorkspace: document.getElementById("editorWorkspace"),
@@ -150,7 +152,7 @@ function renderProductList() {
       </div>
     `;
     li.addEventListener("click", (event) => {
-      if (event.target instanceof HTMLButtonElement) {
+      if (event.target.closest("[data-edit-product]")) {
         return;
       }
       updateSelection({
@@ -158,8 +160,10 @@ function renderProductList() {
         sectionId: product.sections[0]?.id ?? null,
         fieldId: product.sections[0]?.fields[0]?.id ?? null,
       });
+      setView("editor");
     });
-    li.querySelector("[data-edit-product]").addEventListener("click", () => {
+    li.querySelector("[data-edit-product]").addEventListener("click", (event) => {
+      event.stopPropagation();
       const firstSection = product.sections[0];
       updateSelection({
         productId: product.id,
@@ -454,6 +458,23 @@ elements.createProductButton.addEventListener("click", addProduct);
 elements.saveButton.addEventListener("click", saveState);
 elements.saveVersionButton.addEventListener("click", () => {
   alert("Version snapshots will be available in a future release.");
+});
+elements.versionButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  elements.versionMenu.classList.toggle("hidden");
+});
+document.addEventListener("click", (event) => {
+  if (!elements.versionMenu || !elements.versionButton) {
+    return;
+  }
+  if (
+    elements.versionMenu.classList.contains("hidden") ||
+    event.target.closest("#versionMenu") ||
+    event.target.closest("#versionButton")
+  ) {
+    return;
+  }
+  elements.versionMenu.classList.add("hidden");
 });
 elements.productSearch.addEventListener("input", renderProductList);
 elements.productName.addEventListener("blur", () => {

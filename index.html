@@ -22,7 +22,18 @@
         <div class="top-bar__right">
           <div class="editor-actions" id="editorActions">
             <div class="product-name" id="productName" contenteditable="true"></div>
-            <button class="ghost-button" type="button" id="versionButton">v1.0</button>
+            <div class="version-menu">
+              <button class="ghost-button" type="button" id="versionButton">v1.0</button>
+              <div class="version-menu__panel hidden" id="versionMenu" role="menu">
+                <div class="version-menu__header">Version history</div>
+                <div class="version-menu__body">
+                  <p class="version-menu__empty">No saved versions yet.</p>
+                  <p class="version-menu__hint">
+                    Use “Save as Version” to capture snapshots.
+                  </p>
+                </div>
+              </div>
+            </div>
             <span class="role-badge">Admin</span>
             <button class="primary-button" type="button" id="saveButton">Save</button>
             <button class="secondary-button" type="button" id="saveVersionButton">

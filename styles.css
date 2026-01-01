@@ -50,6 +50,44 @@ body {
   gap: 16px;
 }
 
+.version-menu {
+  position: relative;
+}
+
+.version-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  z-index: 5;
+}
+
+.version-menu__header {
+  font-weight: 600;
+}
+
+.version-menu__body {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.version-menu__empty {
+  margin: 0;
+}
+
+.version-menu__hint {
+  margin: 0;
+}
+
 .logo {
   font-weight: 600;
 }
