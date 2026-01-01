@@ -56,6 +56,8 @@ const elements = {
   newProductCategory: document.getElementById("newProductCategory"),
   saveButton: document.getElementById("saveButton"),
   saveVersionButton: document.getElementById("saveVersionButton"),
+  versionButton: document.getElementById("versionButton"),
+  versionMenu: document.getElementById("versionMenu"),
   productSearch: document.getElementById("productSearch"),
   productOverview: document.getElementById("productOverview"),
   editorWorkspace: document.getElementById("editorWorkspace"),
@@ -456,6 +458,23 @@ elements.createProductButton.addEventListener("click", addProduct);
 elements.saveButton.addEventListener("click", saveState);
 elements.saveVersionButton.addEventListener("click", () => {
   alert("Version snapshots will be available in a future release.");
+});
+elements.versionButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  elements.versionMenu.classList.toggle("hidden");
+});
+document.addEventListener("click", (event) => {
+  if (!elements.versionMenu || !elements.versionButton) {
+    return;
+  }
+  if (
+    elements.versionMenu.classList.contains("hidden") ||
+    event.target.closest("#versionMenu") ||
+    event.target.closest("#versionButton")
+  ) {
+    return;
+  }
+  elements.versionMenu.classList.add("hidden");
 });
 elements.productSearch.addEventListener("input", renderProductList);
 elements.productName.addEventListener("blur", () => {
