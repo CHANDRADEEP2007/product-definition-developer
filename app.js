@@ -150,7 +150,7 @@ function renderProductList() {
       </div>
     `;
     li.addEventListener("click", (event) => {
-      if (event.target instanceof HTMLButtonElement) {
+      if (event.target.closest("[data-edit-product]")) {
         return;
       }
       updateSelection({
@@ -158,8 +158,10 @@ function renderProductList() {
         sectionId: product.sections[0]?.id ?? null,
         fieldId: product.sections[0]?.fields[0]?.id ?? null,
       });
+      setView("editor");
     });
-    li.querySelector("[data-edit-product]").addEventListener("click", () => {
+    li.querySelector("[data-edit-product]").addEventListener("click", (event) => {
+      event.stopPropagation();
       const firstSection = product.sections[0];
       updateSelection({
         productId: product.id,
