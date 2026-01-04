@@ -308,6 +308,25 @@ function renderPlayground(product, selectedField) {
           Required
         </label>
       </div>
+          <p>${selectedField.type} field preview</p>
+        </div>
+      </div>
+      <label>
+        Label
+        <input type="text" value="${selectedField.label}" data-playground="label" />
+      </label>
+      <label>
+        Key
+        <input type="text" value="${selectedField.key}" data-playground="key" />
+      </label>
+      <label>
+        Description
+        <textarea data-playground="description">${selectedField.description || ""}</textarea>
+      </label>
+      <label class="playground-toggle">
+        <input type="checkbox" ${selectedField.required ? "checked" : ""} data-playground="required" />
+        Required
+      </label>
     </div>
   `;
 }
