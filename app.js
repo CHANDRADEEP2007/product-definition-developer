@@ -78,7 +78,7 @@ function loadState() {
     return {
       ...structuredClone(defaultState),
       ...parsed,
-      view: parsed.view ?? "overview",
+      view: "overview",
     };
   } catch {
     return structuredClone(defaultState);
@@ -266,6 +266,50 @@ function renderCanvas(product) {
       render();
     });
   });
+}
+
+function renderPlayground(product, selectedField) {
+  if (!product) {
+    return "";
+  }
+
+  if (!selectedField) {
+    return `
+      <div class="playground">
+        <div class="empty-state">Select a field to preview and edit its details.</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="playground">
+      <div class="playground-header">
+        <div>
+          <h3>${selectedField.label}</h3>
+          <p>Shape the field experience for ${selectedField.type.toLowerCase()} data.</p>
+        </div>
+        <span class="playground-pill">${selectedField.type}</span>
+      </div>
+      <div class="playground-grid">
+        <label>
+          Label
+          <input type="text" value="${selectedField.label}" data-playground="label" />
+        </label>
+        <label>
+          Key
+          <input type="text" value="${selectedField.key}" data-playground="key" />
+        </label>
+        <label class="playground-span">
+          Description
+          <textarea data-playground="description" rows="3">${selectedField.description || ""}</textarea>
+        </label>
+        <label class="playground-toggle">
+          <input type="checkbox" ${selectedField.required ? "checked" : ""} data-playground="required" />
+          Required
+        </label>
+      </div>
+    </div>
+  `;
 }
 
 function renderPropertyPanel(product, section, field) {
