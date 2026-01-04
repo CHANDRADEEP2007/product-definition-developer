@@ -268,6 +268,47 @@ function renderCanvas(product) {
   });
 }
 
+function renderPlayground(product, selectedField) {
+  if (!product) {
+    return "";
+  }
+
+  if (!selectedField) {
+    return `
+      <div class="playground">
+        <div class="empty-state">Select a field to preview and edit its details.</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="playground">
+      <div class="playground-header">
+        <div>
+          <h3>${selectedField.label}</h3>
+          <p>${selectedField.type} field preview</p>
+        </div>
+      </div>
+      <label>
+        Label
+        <input type="text" value="${selectedField.label}" data-playground="label" />
+      </label>
+      <label>
+        Key
+        <input type="text" value="${selectedField.key}" data-playground="key" />
+      </label>
+      <label>
+        Description
+        <textarea data-playground="description">${selectedField.description || ""}</textarea>
+      </label>
+      <label class="playground-toggle">
+        <input type="checkbox" ${selectedField.required ? "checked" : ""} data-playground="required" />
+        Required
+      </label>
+    </div>
+  `;
+}
+
 function renderPropertyPanel(product, section, field) {
   if (!product) {
     elements.propertyPanel.innerHTML = `<div class="empty-state">Select a product to view properties.</div>`;
