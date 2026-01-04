@@ -78,7 +78,7 @@ function loadState() {
     return {
       ...structuredClone(defaultState),
       ...parsed,
-      view: parsed.view ?? "overview",
+      view: "overview",
     };
   } catch {
     return structuredClone(defaultState);
