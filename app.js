@@ -286,6 +286,28 @@ function renderPlayground(product, selectedField) {
       <div class="playground-header">
         <div>
           <h3>${selectedField.label}</h3>
+          <p>Shape the field experience for ${selectedField.type.toLowerCase()} data.</p>
+        </div>
+        <span class="playground-pill">${selectedField.type}</span>
+      </div>
+      <div class="playground-grid">
+        <label>
+          Label
+          <input type="text" value="${selectedField.label}" data-playground="label" />
+        </label>
+        <label>
+          Key
+          <input type="text" value="${selectedField.key}" data-playground="key" />
+        </label>
+        <label class="playground-span">
+          Description
+          <textarea data-playground="description" rows="3">${selectedField.description || ""}</textarea>
+        </label>
+        <label class="playground-toggle">
+          <input type="checkbox" ${selectedField.required ? "checked" : ""} data-playground="required" />
+          Required
+        </label>
+      </div>
           <p>${selectedField.type} field preview</p>
         </div>
       </div>
