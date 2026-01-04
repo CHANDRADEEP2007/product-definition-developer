@@ -64,6 +64,8 @@ const elements = {
   backToListButton: document.getElementById("backToListButton"),
   editorActions: document.getElementById("editorActions"),
   featureList: document.getElementById("featureList"),
+  navAllProducts: document.getElementById("navAllProducts"),
+  navDesigner: document.getElementById("navDesigner"),
 };
 
 let state = loadState();
@@ -100,6 +102,8 @@ function renderView() {
   elements.editorWorkspace.classList.toggle("hidden", isOverview);
   elements.backToListButton.classList.toggle("hidden", isOverview);
   elements.editorActions.classList.toggle("hidden", isOverview);
+  elements.navAllProducts.classList.toggle("is-active", isOverview);
+  elements.navDesigner.classList.toggle("is-active", !isOverview);
 }
 
 function updateSelection({ productId, sectionId, fieldId }) {
@@ -565,6 +569,13 @@ elements.featureList.addEventListener("click", (event) => {
   addField(section.id, type);
 });
 elements.backToListButton.addEventListener("click", () => setView("overview"));
+elements.navAllProducts.addEventListener("click", () => setView("overview"));
+elements.navDesigner.addEventListener("click", () => {
+  if (!getSelectedProduct()) {
+    return;
+  }
+  setView("editor");
+});
 
 render();
 renderView();
